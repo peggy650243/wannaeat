@@ -119,26 +119,33 @@
             transform: scale(0.98);
         }
         
-        /* 自訂彩色捲軸 */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #fff7ed; /* orange-50 */
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #fb923c; /* orange-400 */
-            border-radius: 10px;
-            border: 2px solid #fff7ed; /* 增加邊框製造留白感 */
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background-color: #f97316; /* orange-500 */
-        }
-        /* Firefox 支援 */
+        /* 自訂彩色捲軸 - 強制顯示版 */
         .custom-scrollbar {
+            overflow-y: scroll; /* 強制瀏覽器保留捲軸空間 */
             scrollbar-width: thin;
-            scrollbar-color: #fb923c #fff7ed;
+            scrollbar-color: #fb923c #ffedd5;
+            -webkit-overflow-scrolling: touch; /* iOS 滾動優化 */
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 10px; /* 加寬一點 */
+            background-color: #ffedd5; /* 確保軌道有底色 */
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: #ffedd5; /* 淺橘色軌道，與白色背景區分 */
+            border-radius: 10px;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.05); /* 增加一點內陰影讓軌道更明顯 */
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #f97316; /* 深橘色滑塊 */
+            border-radius: 10px;
+            border: 2px solid #ffedd5; /* 邊框顏色與軌道一致 */
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #ea580c; /* Hover 時更深 */
         }
     </style>
 </head>
@@ -170,7 +177,7 @@
             </div>
 
             <!-- Options Grid (Scrollable) -->
-            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div class="flex-1 p-4 custom-scrollbar">
                 <div id="options-grid" class="grid grid-cols-2 gap-2 pb-4">
                     <!-- JS will populate buttons here -->
                 </div>
