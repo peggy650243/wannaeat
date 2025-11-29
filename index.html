@@ -6,9 +6,9 @@
     <title>今天吃什麼？隨機拉霸機</title>
     
     <!-- === 圖示設定 === -->
-    <link rel="apple-touch-icon" sizes="180x180" href="https://github.com/peggy650243/wannaeat/blob/main/wannaeat_thumbnail.png?raw=true">
-    <link rel="icon" type="image/png" sizes="32x32" href="https://github.com/peggy650243/wannaeat/blob/main/wannaeat_thumbnail.png?raw=true">
-    <link rel="shortcut icon" href="https://github.com/peggy650243/wannaeat/blob/main/wannaeat_thumbnail.png?raw=true">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://github.com/peggy650243/wannaeat/blob/main/wannaeat_thumbnail_v2.png?raw=true">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://github.com/peggy650243/wannaeat/blob/main/wannaeat_thumbnail_v2.png?raw=true">
+    <link rel="shortcut icon" href="https://github.com/peggy650243/wannaeat/blob/main/wannaeat_thumbnail_v2.png?raw=true">
     
     <!-- 開啟 Web App 模式 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,6 +24,32 @@
             overflow: hidden;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 頁面切換動畫 */
+        .page {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page.hidden-right {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .page.hidden-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
         }
 
         .slot-window {
@@ -63,49 +89,124 @@
             filter: blur(2px);
             color: #d97706; /* amber-600 */
         }
+
+        /* 選項按鈕樣式 */
+        .option-btn {
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .option-btn.selected {
+            background-color: #f97316; /* orange-500 */
+            color: white;
+            border-color: #c2410c; /* orange-700 */
+            box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.4);
+        }
+        .option-btn.unselected {
+            background-color: white;
+            color: #4b5563; /* gray-600 */
+            border-color: #e5e7eb; /* gray-200 */
+        }
+        
+        /* 隱藏捲軸但保持滾動 */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col items-center justify-center p-4 relative">
+<body class="h-screen w-full relative bg-orange-50">
 
     <canvas id="confetti-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-50"></canvas>
 
-    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-orange-200 z-10">
-        
-        <div class="bg-orange-500 p-6 text-center">
-            <h1 class="text-3xl font-black text-white tracking-widest drop-shadow-md">今天吃什麼？</h1>
-            <p class="text-orange-100 text-sm mt-1">煩惱退散！讓拉霸機幫你決定</p>
-        </div>
+    <!-- ========================================== -->
+    <!-- 頁面 1: 選單設定頁 (Selection Screen) -->
+    <!-- ========================================== -->
+    <div id="selection-page" class="page p-4 z-20">
+        <div class="w-full max-w-md h-full max-h-[90vh] flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-orange-200">
+            <!-- Header -->
+            <div class="bg-orange-500 p-5 text-center shrink-0">
+                <h1 class="text-2xl font-black text-white tracking-widest drop-shadow-md">想吃哪些？</h1>
+                <p class="text-orange-100 text-xs mt-1">勾選你想加入抽選的項目</p>
+            </div>
 
-        <div class="p-8 bg-orange-50 flex flex-col items-center gap-6">
-            
-            <div class="slot-window w-full h-40 bg-gray-100 rounded-xl border-4 border-gray-400 flex items-center justify-center overflow-hidden relative">
-                <div class="absolute w-full h-[1px] bg-red-500/20 top-1/2 left-0 z-0"></div>
-                
-                <div id="display-text" class="text-4xl md:text-5xl font-black text-gray-800 z-10 text-center px-2 leading-tight item-text">
-                    準備好了嗎？
+            <!-- Controls -->
+            <div class="flex justify-between items-center px-6 py-3 bg-orange-50 border-b border-orange-100 shrink-0">
+                <span id="selected-count" class="text-sm font-bold text-orange-600">已選: 0</span>
+                <div class="flex gap-2">
+                    <button onclick="toggleAll(true)" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-full font-bold text-gray-600 active:bg-gray-100">全選</button>
+                    <button onclick="toggleAll(false)" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-full font-bold text-gray-600 active:bg-gray-100">清空</button>
                 </div>
             </div>
 
-            <div id="result-message" class="h-8 text-orange-600 font-bold text-center opacity-0 transition-opacity duration-300">
-                命運的選擇是...
+            <!-- Options Grid (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-4 scrollbar-hide">
+                <div id="options-grid" class="grid grid-cols-2 gap-3 pb-4">
+                    <!-- JS will populate buttons here -->
+                </div>
             </div>
 
-            <div class="w-full flex flex-col gap-3">
-                <button id="spin-btn" onclick="startSpin()" class="btn-push w-full bg-red-500 hover:bg-red-600 text-white text-2xl font-bold py-5 rounded-2xl tracking-wider uppercase flex items-center justify-center gap-2">
-                    <span>🎰</span> 幫我選！
+            <!-- Footer Action -->
+            <div class="p-4 bg-white border-t border-gray-100 shrink-0">
+                <button id="go-slot-btn" onclick="goToSlotMachine()" class="btn-push w-full bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold py-4 rounded-xl tracking-wider uppercase shadow-lg">
+                    前往拉霸機 👉
                 </button>
-
-                <a id="maps-btn" href="#" target="_blank" class="hidden btn-secondary w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold py-3 rounded-xl tracking-wide uppercase flex items-center justify-center gap-2 no-underline">
-                    <span>📍</span> 搜尋附近的餐廳
-                </a>
             </div>
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- 頁面 2: 拉霸機頁 (Slot Machine Screen) -->
+    <!-- ========================================== -->
+    <div id="slot-page" class="page hidden-right p-4 z-20">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-orange-200 relative">
+            
+            <!-- Header -->
+            <div class="bg-orange-500 p-6 text-center relative">
+                <!-- Back Button (Enlarged for better touch target) -->
+                <button onclick="backToSelection()" class="absolute left-2 top-1/2 -translate-y-1/2 text-white/90 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors" aria-label="返回選單">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 class="text-3xl font-black text-white tracking-widest drop-shadow-md">今天吃什麼？</h1>
+                <p class="text-orange-100 text-sm mt-1">煩惱退散！讓拉霸機幫你決定</p>
+            </div>
+
+            <!-- Slot Display -->
+            <div class="p-8 bg-orange-50 flex flex-col items-center gap-6">
+                
+                <div class="slot-window w-full h-40 bg-gray-100 rounded-xl border-4 border-gray-400 flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute w-full h-[1px] bg-red-500/20 top-1/2 left-0 z-0"></div>
+                    
+                    <div id="display-text" class="text-4xl md:text-5xl font-black text-gray-800 z-10 text-center px-2 leading-tight item-text">
+                        準備好了嗎？
+                    </div>
+                </div>
+
+                <div id="result-message" class="h-8 text-orange-600 font-bold text-center opacity-0 transition-opacity duration-300">
+                    命運的選擇是...
+                </div>
+
+                <div class="w-full flex flex-col gap-3">
+                    <button id="spin-btn" onclick="startSpin()" class="btn-push w-full bg-red-500 hover:bg-red-600 text-white text-2xl font-bold py-5 rounded-2xl tracking-wider uppercase flex items-center justify-center gap-2">
+                        <span>🎰</span> 幫我選！
+                    </button>
+
+                    <a id="maps-btn" href="#" target="_blank" class="hidden btn-secondary w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold py-3 rounded-xl tracking-wide uppercase flex items-center justify-center gap-2 no-underline">
+                        <span>📍</span> 搜尋附近的餐廳
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Bottom footer link removed -->
+        </div>
+    </div>
+
     <script>
-        // Data Configuration
-        // name: 顯示名稱
-        // search: (選填) Google Maps 搜尋關鍵字。若沒填，預設會用 "name + 餐廳"
+        // === 資料設定 ===
         const initialFoodOptions = [
             { name: "雞肉飯", icon: "🍚" },
             { name: "咖喱飯", icon: "🍛" },
@@ -114,7 +215,7 @@
             { name: "滷肉飯", icon: "🥢" },
             { name: "披薩", icon: "🍕" },
             { name: "炸雞", icon: "🍗" },
-            { name: "漢堡", icon: "🍔", search: "漢堡店" }, // 指定搜尋漢堡店，避免搜尋到德國漢堡
+            { name: "漢堡", icon: "🍔", search: "漢堡店" }, 
             { name: "早午餐", icon: "🍳" },
             { name: "豬排", icon: "🍱" },
             { name: "壽司", icon: "🍣" },
@@ -122,20 +223,123 @@
             { name: "韓式料理", icon: "🥘" },
             { name: "義大利麵", icon: "🍝" },
             { name: "火鍋", icon: "🍲" },
-            { name: "快炒", icon: "🍤", search: "熱炒店" }, // 熱炒店通常比快炒更精準
+            { name: "快炒", icon: "🍤", search: "熱炒店" }, 
             { name: "鐵板燒", icon: "🥩" }
         ];
 
-        // Add weight property
-        let foodOptions = initialFoodOptions.map(item => ({ ...item, weight: 100 }));
+        // 狀態變數
+        let activeOptions = []; // 實際用於拉霸的列表
+        let selectedIndices = new Set(); // 在選單頁被勾選的索引
+        let isSpinning = false;
 
+        // DOM 元素
+        const selectionPage = document.getElementById('selection-page');
+        const slotPage = document.getElementById('slot-page');
+        const optionsGrid = document.getElementById('options-grid');
+        const selectedCountEl = document.getElementById('selected-count');
+        const goSlotBtn = document.getElementById('go-slot-btn');
+        
         const displayEl = document.getElementById('display-text');
         const spinBtn = document.getElementById('spin-btn');
         const mapsBtn = document.getElementById('maps-btn');
         const resultMsg = document.getElementById('result-message');
 
-        let isSpinning = false;
+        // === 初始化 ===
+        function init() {
+            // 預設全選
+            initialFoodOptions.forEach((_, index) => selectedIndices.add(index));
+            renderSelectionGrid();
+            updateSelectionUI();
+        }
 
+        // === 選單頁面邏輯 ===
+        function renderSelectionGrid() {
+            optionsGrid.innerHTML = '';
+            initialFoodOptions.forEach((item, index) => {
+                const btn = document.createElement('button');
+                const isSelected = selectedIndices.has(index);
+                
+                btn.className = `option-btn w-full py-3 px-4 rounded-xl flex items-center justify-start gap-3 font-bold text-lg ${isSelected ? 'selected' : 'unselected'}`;
+                btn.onclick = () => toggleOption(index);
+                
+                btn.innerHTML = `
+                    <span class="text-xl">${item.icon}</span>
+                    <span>${item.name}</span>
+                    ${isSelected ? '<span class="ml-auto text-white">✓</span>' : ''}
+                `;
+                
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function toggleOption(index) {
+            if (selectedIndices.has(index)) {
+                selectedIndices.delete(index);
+            } else {
+                selectedIndices.add(index);
+            }
+            renderSelectionGrid(); // 重新渲染按鈕狀態
+            updateSelectionUI();
+        }
+
+        function toggleAll(selectAll) {
+            selectedIndices.clear();
+            if (selectAll) {
+                initialFoodOptions.forEach((_, index) => selectedIndices.add(index));
+            }
+            renderSelectionGrid();
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedIndices.size;
+            selectedCountEl.textContent = `已選: ${count}`;
+            
+            // 至少要選一個才能開始
+            if (count === 0) {
+                goSlotBtn.disabled = true;
+                goSlotBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                goSlotBtn.innerText = "請至少選擇一項";
+            } else {
+                goSlotBtn.disabled = false;
+                goSlotBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                goSlotBtn.innerText = "前往拉霸機 👉";
+            }
+        }
+
+        // === 頁面切換 ===
+        function goToSlotMachine() {
+            if (selectedIndices.size === 0) return;
+
+            // 準備拉霸機資料
+            activeOptions = initialFoodOptions
+                .filter((_, index) => selectedIndices.has(index))
+                .map(item => ({ ...item, weight: 100 })); // 重置權重
+
+            // UI 切換動畫
+            selectionPage.classList.add('hidden-left');
+            slotPage.classList.remove('hidden-right');
+            
+            // 重置拉霸機顯示
+            resetSlotDisplay();
+        }
+
+        function backToSelection() {
+            selectionPage.classList.remove('hidden-left');
+            slotPage.classList.add('hidden-right');
+        }
+
+        function resetSlotDisplay() {
+            displayEl.textContent = "準備好了嗎？";
+            displayEl.classList.remove('blur-motion');
+            resultMsg.style.opacity = '0';
+            mapsBtn.classList.add('hidden');
+            mapsBtn.classList.remove('flex');
+            spinBtn.disabled = false;
+            spinBtn.innerHTML = `<span>🎰</span> 幫我選！`;
+        }
+
+        // === 拉霸機邏輯 (使用 activeOptions) ===
         function startSpin() {
             if (isSpinning) return;
 
@@ -151,12 +355,14 @@
             let counter = 0;
             const totalSpins = 30 + Math.floor(Math.random() * 10);
 
+            // 清除碎花
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const runLoop = () => {
-                const visualRandom = foodOptions[Math.floor(Math.random() * foodOptions.length)];
+                // 從 activeOptions 隨機選
+                const visualRandom = activeOptions[Math.floor(Math.random() * activeOptions.length)];
                 displayEl.textContent = `${visualRandom.icon} ${visualRandom.name}`;
                 counter++;
 
@@ -175,23 +381,23 @@
         }
 
         function getWeightedWinner() {
-            const totalWeight = foodOptions.reduce((sum, item) => sum + item.weight, 0);
+            const totalWeight = activeOptions.reduce((sum, item) => sum + item.weight, 0);
             let randomNum = Math.random() * totalWeight;
             
-            for (let i = 0; i < foodOptions.length; i++) {
-                if (randomNum < foodOptions[i].weight) {
-                    return foodOptions[i];
+            for (let i = 0; i < activeOptions.length; i++) {
+                if (randomNum < activeOptions[i].weight) {
+                    return activeOptions[i];
                 }
-                randomNum -= foodOptions[i].weight;
+                randomNum -= activeOptions[i].weight;
             }
-            return foodOptions[0];
+            return activeOptions[0];
         }
 
         function finishSpin() {
             const winner = getWeightedWinner();
             
-            // Reduce weight for next time
-            foodOptions.forEach(item => {
+            // 降低該選項權重
+            activeOptions.forEach(item => {
                 if (item.name === winner.name) {
                     item.weight = 10;
                 }
@@ -206,12 +412,8 @@
             spinBtn.innerHTML = `<span>🔄</span> 再選一次`;
             spinBtn.disabled = false;
             
-            // === 關鍵的 Google Maps 搜尋邏輯優化 ===
-            // 如果該選項有指定的 search 關鍵字，就用指定的 (例如：漢堡 -> 漢堡店)
-            // 如果沒有，則預設加上 "餐廳" (例如：雞肉飯 -> 雞肉飯餐廳)
-            // 這種方式不需要寫 "附近"，Maps 會自動搜尋目前位置周邊的店家
+            // Google Maps
             const searchTerm = winner.search ? winner.search : `${winner.name}餐廳`;
-            
             mapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchTerm)}`;
             mapsBtn.classList.remove('hidden');
             mapsBtn.classList.add('flex');
@@ -220,6 +422,7 @@
             fireConfetti();
         }
 
+        // === 碎花特效 ===
         function fireConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
@@ -284,6 +487,9 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
+
+        // 啟動應用
+        init();
 
     </script>
 </body>
